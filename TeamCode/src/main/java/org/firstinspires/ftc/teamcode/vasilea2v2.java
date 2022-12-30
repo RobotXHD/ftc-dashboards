@@ -1,41 +1,38 @@
+
 package org.firstinspires.ftc.teamcode;
 
-import static org.firstinspires.ftc.teamcode.Var.Webcam_h;
-import static org.firstinspires.ftc.teamcode.Var.Webcam_w;
+import static org.firstinspires.ftc.teamcode.Var.*;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-//import org.firstinspires.ftc.teamcode.util.Encoder;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
-@Autonomous
-public class A2Autonomous extends LinearOpMode {
-    private OpenCvCamera webcam;
-    private PachetelNouOpenCV pachetelNouOpenCV = new PachetelNouOpenCV();
-    private double width, height;
-    public DcMotorEx motorFR, motorFL, motorBR, motorBL;
-    public DcMotorEx slider,slider2;
-    int ok=0,pduck=0;
-    public double lastTime;
-    boolean a=true;
+import org.openftc.easyopencv.OpenCvWebcam;
 
+@Autonomous
+public class vasilea2v2 extends LinearOpMode {
+    //de fapt AutonomousA2
+    private OpenCvWebcam webcam;
+    private PachetelNouOpenCV pipeline = new PachetelNouOpenCV();
+    private double width, height;
+    public double lastTime;
+    DcMotorEx motorFR, motorFL, motorBR, motorBL, slider;
     private Servo claw;
-    private static final String cub = "Cube";
+
     String varrez = "Dreapta";
     static final double COUNTSPERR = 383.6;
     static final double GEARREDUCTION = 1;
     static final double DIAMROT = 9.6;
     static final double COUNTS_PER_CM = (COUNTSPERR*GEARREDUCTION) / (DIAMROT*3.1415);
-
+    //merge si pentru F2 acest autonom
     private double crThreshHigh = 150;
     private double crThreshLow = 120;
     private double cbThreshHigh = 255;
@@ -44,61 +41,43 @@ public class A2Autonomous extends LinearOpMode {
     int currentmotorBR;
     int currentmotorFL;
     int currentmotorFR;
-    double Lpos = 0.7;
-    //public Encoder aa;
-    /*private int minRectangleArea = 2000;
-    private double leftBarcodeRangeBoundary = 0.3; //i.e 30% of the way across the frame from the left
-    private double rightBarcodeRangeBoundary = 0.6; //i.e 60% of the way across the frame from the left*/
 
     private double lowerRuntime = 0;
     private double upperRuntime = 0;
-    FunctiiDeAutonom f = new FunctiiDeAutonom(true);
-    // Pink Range                                      Y      Cr     Cb
-    /*public static Scalar scalarLowerYCrCb = new Scalar(0.0, 150.0, 120.0);
-    public static Scalar scalarUpperYCrCb = new Scalar(235.0, 235.0, 235.0);*/
-    @Override
-    public void runOpMode() throws InterruptedException {
 
+    @Override
+    public void runOpMode() {
         motorBL = hardwareMap.get(DcMotorEx.class, "motorBL");
         motorBR = hardwareMap.get(DcMotorEx.class, "motorBR");
         motorFL = hardwareMap.get(DcMotorEx.class, "motorFL");
         motorFR = hardwareMap.get(DcMotorEx.class, "motorFR");
-
         slider = hardwareMap.get(DcMotorEx.class, "slider");
-        slider2 = hardwareMap.get(DcMotorEx.class, "slider2");
-
         claw = hardwareMap.servo.get("claw");
-
-        motorBL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        motorBR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        motorFL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        motorFR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        slider2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
 
         motorBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorBR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
         slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        slider2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         motorBL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motorBR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motorFL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motorFR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
         slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        slider2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(),telemetry);
+
+        motorBL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorBR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorFL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        motorFR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
-        webcam.setPipeline(pachetelNouOpenCV);
+        webcam.setPipeline(pipeline);
 
+        webcam.setMillisecondsPermissionTimeout(2500);
         webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
             public void onOpened() {
@@ -110,14 +89,14 @@ public class A2Autonomous extends LinearOpMode {
 
             }
         });
-
         telemetry.addLine("Waiting for start");
         telemetry.update();
-        FtcDashboard.getInstance().startCameraStream(webcam, 0);
-            while (opModeIsActive()) {
-                try{
-                width = pachetelNouOpenCV.getRect().width;
-                height = pachetelNouOpenCV.getRect().height;
+        FtcDashboard.getInstance().startCameraStream(webcam, 60);
+
+        while (!isStarted() && !isStopRequested()) {
+            try {
+                width = pipeline.getRect().width;
+                height = pipeline.getRect().height;
                 telemetry.addData("Frame Count", webcam.getFrameCount());
                 telemetry.addData("FPS", String.format("%.2f", webcam.getFps()));
                 telemetry.addData("Total frame time ms", webcam.getTotalFrameTimeMs());
@@ -129,19 +108,21 @@ public class A2Autonomous extends LinearOpMode {
                 telemetry.addData("Rectangle H/W:", height / width);
                 if (height / width < 0.9) {
                     telemetry.addData("Rect", "3");
+                    varrez = "Dreapta";
                 } else if (height / width < 3) {
                     telemetry.addData("Rect", "1");
+                    varrez = "Stanga";
                 } else {
                     telemetry.addData("Rect", "2");
+                    varrez = "Mijloc";
                 }
+                telemetry.addData("caz", varrez);
                 telemetry.update();
+            } catch (Exception E) {
+                telemetry.addData("Webcam error", "Please restart");
             }
-            catch(Exception E){
-                height = 1;
-                width = 1000;
-            }
-            }
-            Autonom.start();
+        }
+        Autonom.start();
         while(!isStopRequested()){
 
         }
@@ -149,11 +130,33 @@ public class A2Autonomous extends LinearOpMode {
     public Thread Autonom = new Thread(new Runnable(){
         @Override
         public void run() {
-            /*varrez = "Mijloc";
             if(varrez=="Dreapta"&&!isStopRequested()) {
                 Translatare(130,0,0.5);
                 kdf(200);
-                Translatare(0,-245,0.5);
+                Translatare(0,245,0.5);
+                kdf(200);
+                /*Rotire(215,0.5);
+                kdf(200);
+                slider.setTargetPosition(-870);
+                slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                slider.setPower(0.5);
+                while (slider.isBusy()) ;
+                slider.setPower(0);
+                slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                kdf(200);
+                claw.setPosition(0.4);
+                kdf(200);
+                Translatare(0,125,0.5);
+                kdf(200);
+                claw.setPosition(0.0);
+                kdf(200);
+                slider.setTargetPosition(-870);
+                slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);    .0
+                slider.setPower(0.5);
+                while (slider.isBusy()) ;
+                slider.setPower(0);
+                slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                kdf(200);*/
             }
 
             if(varrez == "Mijloc"&&!isStopRequested()) {
@@ -170,8 +173,7 @@ public class A2Autonomous extends LinearOpMode {
                 Translatare(0,-245,0.5);
                 kdf(600);
                 Translatare(-260,0,0.5);
-            }*/
-            f.gotoX(1000,1);
+            }
         }
     });
     public void testing(ContourPiepline pipeline){
@@ -351,35 +353,6 @@ public class A2Autonomous extends LinearOpMode {
             if (errorpos > Maxerror) Done = false;
         }
     }
-    void brat_to_the_top(){
-        slider.setTargetPosition(-2400);//465
-        slider2.setTargetPosition(-2520);//465
-        slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        slider2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        slider.setPower(1);
-        slider2.setPower(1);
-        while(slider.isBusy() && slider2.isBusy());
-        slider.setPower(0);
-        slider2.setPower(0);
-        slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        slider2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    }
-    void brat_retreat(){
-        slider.setTargetPosition(0);//465
-        slider2.setTargetPosition(0);//465
-        slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        slider2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        slider.setPower(1);
-        slider2.setPower(1);
-        while(slider.isBusy() && slider2.isBusy());
-        slider.setPower(0);
-        slider2.setPower(0);
-        slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        slider2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    }
-    public void claw_pos(double claw_pos){
-        claw.setPosition(claw_pos);
-    }
     public void kdf(int t){
         lastTime=System.currentTimeMillis();
         while(lastTime + t < System.currentTimeMillis()){
@@ -407,3 +380,9 @@ ________________|________________
                 |
 
  */
+
+    /*
+    H/W(big=1):1.588
+    H/W(small=3):0.23
+    H/W(medium=2):4.23
+     */

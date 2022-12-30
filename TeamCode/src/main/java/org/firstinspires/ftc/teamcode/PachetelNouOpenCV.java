@@ -56,73 +56,77 @@ public class PachetelNouOpenCV extends OpenCvPipeline {
          * invocation of this method. That is, if for some reason you'd like to save a copy
          * of this particular frame for later use, you will need to either clone it or copy
          * it to another Mat.
+         * ummm era un try catch aici, cred ca de aia nu merge
+         * sau poate pentru ca nu are picioare
          */
 
+        try {
+            Mat element = Imgproc.getStructuringElement(elementType, new Size(2 * CV_kernel_pult_size + 1, 2 * CV_kernel_pult_size + 1),
+                    new Point(CV_kernel_pult_size, CV_kernel_pult_size));
+            Mat original = input.clone();
 
-        Mat element = Imgproc.getStructuringElement(elementType, new Size(2 * CV_kernel_pult_size + 1, 2 * CV_kernel_pult_size + 1),
-                new Point(CV_kernel_pult_size, CV_kernel_pult_size));
-        Mat original = input.clone();
+            Scalar scalarLowerHSV, scalarUpperHSV;
 
-        Scalar scalarLowerHSV,scalarUpperHSV;
-
-        if(CV_detectionType == Var.DetectionTypes.DAY) {
-            scalarLowerHSV = new Scalar(Day_Hlow, Day_Slow, Day_Vlow);
-            scalarUpperHSV = new Scalar(Day_Hhigh, Day_Shigh, Day_Vhigh);
-        }
-        else{
-            scalarLowerHSV = new Scalar(Night_Hlow, Night_Slow, Night_Vlow);
-            scalarUpperHSV = new Scalar(Night_Hhigh, Night_Shigh, Night_Vhigh);
-        }
-
-        Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2HSV);
-        Core.inRange(input, scalarLowerHSV, scalarUpperHSV, input);
-
-        Imgproc.erode(input, input, element);
-        Imgproc.dilate(input, input, element);
-        Imgproc.dilate(input, input, element);
-        Imgproc.erode(input, input, element);
-
-        Mat rect = new Mat(input.rows(), input.cols(), input.type(), Scalar.all(0));
-        Imgproc.rectangle(
-                rect,
-                new Point(CV_rect_x1, CV_rect_y1),
-                new Point(CV_rect_x2, CV_rect_y2),
-                new Scalar(255),
-                Imgproc.FILLED
-        );
-        Core.bitwise_and(input,rect,input);
-
-        List<MatOfPoint> contours = new ArrayList<>();
-        Imgproc.findContours(input, contours, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
-        Collections.sort(contours, new Comparator<MatOfPoint>() {
-            @Override
-            public int compare(MatOfPoint matOfPoint, MatOfPoint t1) {
-                return (int)(Imgproc.contourArea(t1) - Imgproc.contourArea(matOfPoint));
+            if (CV_detectionType == Var.DetectionTypes.DAY) {
+                scalarLowerHSV = new Scalar(Day_Hlow, Day_Slow, Day_Vlow);
+                scalarUpperHSV = new Scalar(Day_Hhigh, Day_Shigh, Day_Vhigh);
+            } else {
+                scalarLowerHSV = new Scalar(Night_Hlow, Night_Slow, Night_Vlow);
+                scalarUpperHSV = new Scalar(Night_Hhigh, Night_Shigh, Night_Vhigh);
             }
-        });
-        if(!contours.isEmpty()) {
-            setRect(Imgproc.boundingRect(contours.get(0)));
+
+            Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2HSV);
+            Core.inRange(input, scalarLowerHSV, scalarUpperHSV, input);
+
+            Imgproc.erode(input, input, element);
+            Imgproc.dilate(input, input, element);
+            Imgproc.dilate(input, input, element);
+            Imgproc.erode(input, input, element);
+
+            Mat rect = new Mat(input.rows(), input.cols(), input.type(), Scalar.all(0));
+            Imgproc.rectangle(
+                    rect,
+                    new Point(CV_rect_x1, CV_rect_y1),
+                    new Point(CV_rect_x2, CV_rect_y2),
+                    new Scalar(255),
+                    Imgproc.FILLED
+            );
+            Core.bitwise_and(input, rect, input);
+
+            List<MatOfPoint> contours = new ArrayList<>();
+            Imgproc.findContours(input, contours, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+            Collections.sort(contours, new Comparator<MatOfPoint>() {
+                @Override
+                public int compare(MatOfPoint matOfPoint, MatOfPoint t1) {
+                    return (int) (Imgproc.contourArea(t1) - Imgproc.contourArea(matOfPoint));
+                }
+            });
+            if (!contours.isEmpty()) {
+                setRect(Imgproc.boundingRect(contours.get(0)));
+            }
+
+            Imgproc.cvtColor(input, input, Imgproc.COLOR_GRAY2RGBA);
+            Core.bitwise_or(input, original, input);
+
+            Imgproc.drawContours(input, contours, -1, new Scalar(0, 255, 0), 4);
+
+            Imgproc.rectangle(
+                    input,
+                    new Point(CV_rect_x1, CV_rect_y1),
+                    new Point(CV_rect_x2, CV_rect_y2),
+                    new Scalar(255, 127, 0), 4);
+
+            Imgproc.rectangle(
+                    input,
+                    getRect(),
+                    new Scalar(0, 255, 255), 4);
+
+            original.release();
+            rect.release();
         }
+        catch (Exception E){
 
-        Imgproc.cvtColor(input, input, Imgproc.COLOR_GRAY2RGBA);
-        Core.bitwise_or(input, original, input);
-
-        Imgproc.drawContours(input, contours, -1, new Scalar(0, 255, 0), 4);
-
-        Imgproc.rectangle(
-                input,
-                new Point(CV_rect_x1, CV_rect_y1),
-                new Point(CV_rect_x2, CV_rect_y2),
-                new Scalar(255, 127, 0), 4);
-
-        Imgproc.rectangle(
-                input,
-                getRect(),
-                new Scalar(0, 255, 255), 4);
-
-        original.release();
-        rect.release();
-
+        }
         return input;
     }
 
