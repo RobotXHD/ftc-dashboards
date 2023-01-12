@@ -87,15 +87,11 @@ public class Pid_Controller_Adevarat
      */
     public void setPID(double p, double i, double d)
     {
+        if(i != m_I){
+            m_totalError = 0;
+        }
         m_P = p;
         m_I = i;
-        //normalising the total error
-        if(m_totalError * m_I < m_minimumOutput && m_I != 0.0){
-            m_totalError = m_minimumOutput / m_I;
-        }
-        else if(m_totalError * m_I > m_maximumOutput && m_I != 0.0){
-            m_totalError = m_maximumOutput / m_I;
-        }
         m_D = d;
     }
 
