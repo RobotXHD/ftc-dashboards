@@ -1,10 +1,17 @@
-
 package org.firstinspires.ftc.teamcode;
-
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import static org.firstinspires.ftc.teamcode.pid.kp;
 import static org.firstinspires.ftc.teamcode.pid.ki;
 import static org.firstinspires.ftc.teamcode.pid.kd;
-import static org.firstinspires.ftc.teamcode.pid.kf;
+import static org.firstinspires.ftc.teamcode.pid.iarm;
+import static org.firstinspires.ftc.teamcode.pid.darm;
+import static org.firstinspires.ftc.teamcode.pid.parm;
+import static org.firstinspires.ftc.teamcode.pid.p;
+import static org.firstinspires.ftc.teamcode.pid.i;
+import static org.firstinspires.ftc.teamcode.pid.d;
+import static org.firstinspires.ftc.teamcode.pid.pslider;
+import static org.firstinspires.ftc.teamcode.pid.islider;
+import static org.firstinspires.ftc.teamcode.pid.dslider;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.hardware.bosch.BNO055IMU;
@@ -33,30 +40,33 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 @TeleOp
 public class PPNotWorking extends OpMode{
     //private Gyroscope imu;
-    private DcMotor motorBL;
-    private DcMotor motorBR;
-    private DcMotor motorFL;
-    private DcMotor motorFR;
-    private DcMotor slider,arm;
-    private DcMotor slider2,arm2;
+    private DcMotorEx motorBL;
+    private DcMotorEx motorBR;
+    private DcMotorEx motorFL;
+    private DcMotorEx motorFR;
+    private DcMotorEx slider,arm;
+    private DcMotorEx slider2,arm2;
+    private DcMotorEx undita, articulatieUndita;
     private Servo claw;
     private TouchSensor touchy;
+    private Servo servomic;
+    private Servo articulatie;
     double sm = 1, ms = 2;
     double poz = 0;
     double gpoz = 0.5;
     private BNO055IMU imu;
     double y, x, rx;
-    double sliderPower,lastsliderPower,lastGamepadSlider;
+    double sliderPower,sliderPos;
     double max = 0;
     double pmotorBL;
     double pmotorBR;
     double pmotorFL;
     double pmotorFR;
-    double lastTime;
+    double lastTime, pidResult, pidpidResult;
     private boolean alast = false;
     float right_stick2;
     float right_stick1;
-    boolean v = true,ok1,ok2,ok3,ok4,ok5,ok6,ok7;
+    boolean v = true,ok1,ok2=false,ok3,ok4,ok5,ok6,ok7;
     boolean FirstTime = true;
     boolean inchis = false;
     boolean overpower = true;
@@ -64,7 +74,7 @@ public class PPNotWorking extends OpMode{
     boolean stopDJ = false;
     boolean tru=false;
     boolean touch=false;
-    private boolean stop=false;
+    private boolean stop=false,setSetpoint=false,setsetSetpoint=false;
     int okGrip = 1, okClaw = 1;
     public int i;
     public int cn=0;
@@ -74,6 +84,7 @@ public class PPNotWorking extends OpMode{
     int loaderState = -1;
     private int apoz = 0;
     Pid_Controller_Adevarat pid = new Pid_Controller_Adevarat(0.0,0.0,0.0);
+    Pid_Controller_Adevarat pidslider = new Pid_Controller_Adevarat(0.0,0.0,0.0);
     private long spasmCurrentTime = 0;
     private long pidTime = 0;
     public double difference,medie;
@@ -83,15 +94,16 @@ public class PPNotWorking extends OpMode{
     private double forward, right, clockwise;
     public void init() {
         pid.enable();
+        pidslider.enable();
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        motorBL = hardwareMap.get(DcMotor.class, "motorBL"); // Motor Back-Left
-        motorBR = hardwareMap.get(DcMotor.class, "motorBR"); // Motor Back-Right
-        motorFL = hardwareMap.get(DcMotor.class, "motorFL"); // Motor Front-Left
-        motorFR = hardwareMap.get(DcMotor.class, "motorFR"); // Motor Front-Right
-        slider = hardwareMap.get(DcMotor.class, "slider");
-        slider2 = hardwareMap.get(DcMotor.class, "slider2");
-        arm = hardwareMap.get(DcMotor.class, "arm");
-        arm2 = hardwareMap.get(DcMotor.class, "arm2");
+        motorBL = hardwareMap.get(DcMotorEx.class, "motorBL"); // Motor Back-Left
+        motorBR = hardwareMap.get(DcMotorEx.class, "motorBR"); // Motor Back-Right
+        motorFL = hardwareMap.get(DcMotorEx.class, "motorFL"); // Motor Front-Left
+        motorFR = hardwareMap.get(DcMotorEx.class, "motorFR"); // Motor Front-Right
+        slider = hardwareMap.get(DcMotorEx.class, "slider");
+        slider2 = hardwareMap.get(DcMotorEx.class, "slider2");
+        arm = hardwareMap.get(DcMotorEx.class, "arm");
+        arm2 = hardwareMap.get(DcMotorEx.class, "arm2");
         claw = hardwareMap.servo.get("claw");
         touchy = hardwareMap.get(TouchSensor.class, "touchy");
         imu = hardwareMap.get(BNO055IMU.class, "imu");
@@ -143,6 +155,7 @@ public class PPNotWorking extends OpMode{
         //imuT.start();
         Chassis.start();
         Systems.start();
+        pdi.start();
     }
     private final Thread Chassis = new Thread(new Runnable() {
         @Override
@@ -176,10 +189,10 @@ public class PPNotWorking extends OpMode{
                         correction = 0.0;
                     }
                 }*/
-                pmotorFL = -y - x - rx + correction;
-                pmotorBL = -y + x - rx - correction;
-                pmotorBR = -y - x + rx - correction;
-                pmotorFR = -y + x + rx + correction;
+                pmotorFL = y - x - rx + correction;
+                pmotorBL = y + x - rx - correction;
+                pmotorBR = y - x + rx - correction;
+                pmotorFR = y + x + rx + correction;
 
                 max = abs(pmotorFL);
                 if (abs(pmotorFR) > max) {
@@ -220,7 +233,7 @@ public class PPNotWorking extends OpMode{
             }
         }
     });
-    private Thread imuT = new Thread(new Runnable() {
+    /*private Thread imuT = new Thread(new Runnable() {
         double angle, lastAngle;
         int rotations;
         @Override
@@ -244,18 +257,16 @@ public class PPNotWorking extends OpMode{
                 realAngle = angle + 360 * rotations;
             }
         }
-    });
+    });*/
     private final Thread Systems = new Thread(new Runnable() {
         @Override
         public void run() {
+            arm.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(constants.parm, constants.iarm, constants.darm, 0.0));
+            arm2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(constants.parm, constants.iarm, constants.darm, 0.0));
+            slider.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(constants.pslider, constants.islider, constants.dslider, 0.0));
+            slider2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(constants.pslider, constants.islider, constants.dslider, 0.0));
             while (!stop) {
-                pid.setPID(constants.kp,constants.ki,constants.kd);
-                double armPower  = gamepad2.left_stick_y * 0.5;
-                arm.setPower(armPower / ms);
-                arm2.setPower(-armPower / ms );
-                sliderPower  = gamepad2.right_stick_y;
-                slider.setPower(-sliderPower / ms);
-                slider2.setPower(sliderPower / ms);
+                //slider.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(constants.p, constants.i, constants.d, constants.f));
                 /*if(gamepad2.b) {
                     slider.setTargetPosition(-1680);
                     slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -279,9 +290,16 @@ public class PPNotWorking extends OpMode{
                     ms = 5;
                 else ms = 0.5;
 
+                if(gamepad1.right_bumper)
+                    servomic.setPosition(0.2);
+                if(gamepad1.left_bumper)
+                    servomic.setPosition(0.5);
+                if(gamepad2.dpad_up)
+                    articulatie.setPosition(0.2);
+                if(gamepad2.dpad_down)
+                    articulatie.setPosition(0.5);
                 /*if (gamepad2.a)
                 {claw.setPosition(0.0);
-
                 }
                 if (gamepad2.y)
                     claw.setPosition(0.4);*/
@@ -289,11 +307,12 @@ public class PPNotWorking extends OpMode{
                 if(a!=alast){
                     cn++;
                 }
+                cn=cn/2;
                 alast = a;
-                if(cn%4==2){
+                if(cn%2==1){
                     claw.setPosition(1);
                 }
-                else if(cn%4==0){
+                else if(cn%2==0){
                     claw.setPosition(0);
                 }
                 if (touchy.isPressed()) {
@@ -315,9 +334,51 @@ public class PPNotWorking extends OpMode{
                 else { // Otherwise, run the motor
                     touch=false;
                 }
-                if(gamepad2.dpad_up){
-                    pid.setSetpoint(-393);
-                    pid.performPID(-393);
+            }
+        }
+    });
+    private final Thread pdi = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            pid.setPID(constants.kp,constants.ki,constants.kd);
+            pidslider.setPID(constants.p,constants.i,constants.d);
+            while (!stop) {
+                if(gamepad2.right_bumper){
+                    ms = 2;
+                }
+                else if (gamepad2.left_bumper) {
+                    ms = 5;
+                }
+                else{
+                    ms = 0.5;
+                }
+                if(gamepad2.left_stick_y != 0.0){
+                    arm.setPower(gamepad2.left_stick_y / ms);
+                    arm2.setPower(-gamepad2.left_stick_y / ms);
+                    setSetpoint = true;
+                }
+                else {
+                    if (setSetpoint) {
+                        pid.setSetpoint(arm.getCurrentPosition());
+                        setSetpoint = false;
+                    }
+                    pidResult = pid.performPID(arm.getCurrentPosition());
+                    arm.setPower(pidResult);
+                    arm2.setPower(-pidResult);
+                }
+                if(gamepad2.right_stick_y != 0.0){
+                    slider.setPower(gamepad2.right_stick_y / ms);
+                    slider2.setPower(-gamepad2.right_stick_y / ms);
+                    setsetSetpoint = true;
+                }
+                else {
+                    if (setsetSetpoint) {
+                        pidslider.setSetpoint(slider.getCurrentPosition());
+                        setsetSetpoint = false;
+                    }
+                    pidpidResult = pidslider.performPID(slider.getCurrentPosition());
+                    slider.setPower(pidpidResult);
+                    slider2.setPower(-pidpidResult);
                 }
             }
         }
@@ -336,7 +397,11 @@ public class PPNotWorking extends OpMode{
         telemetry.addData("asdf: ", gamepad1.right_stick_y);
         telemetry.addData("thread: ", stop);
         telemetry.addData("ghera: ", claw.getPosition());
-        telemetry.addData("last slider position:", lastsliderPower);
+        telemetry.addData("getSetpoint",pid.getSetpoint());
+        telemetry.addData("PError",pid.getError()*pid.getP());
+        telemetry.addData("DError",pid.getDError()*pid.getD());
+        telemetry.addData("IError",pid.getISum()*pid.getI());
+        telemetry.addData("Error",pid.getError());
         telemetry.update();
     }
     public void POWER(double df1, double sf1, double ds1, double ss1){
@@ -346,4 +411,3 @@ public class PPNotWorking extends OpMode{
         motorBR.setPower(ds1);
     }
 }
-
