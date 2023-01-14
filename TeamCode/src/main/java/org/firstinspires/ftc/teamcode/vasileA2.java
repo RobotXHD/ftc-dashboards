@@ -24,7 +24,7 @@ public class vasileA2 extends LinearOpMode {
     private PachetelNouOpenCV pipeline = new PachetelNouOpenCV();
     private double width, height;
     public double lastTime;
-    DcMotorEx motorFR, motorFL, motorBR, motorBL, slider;
+    DcMotorEx motorFR, motorFL, motorBR, motorBL;
     private Servo claw;
 
     String varrez = "Dreapta";
@@ -51,27 +51,21 @@ public class vasileA2 extends LinearOpMode {
         motorBR = hardwareMap.get(DcMotorEx.class, "motorBR");
         motorFL = hardwareMap.get(DcMotorEx.class, "motorFL");
         motorFR = hardwareMap.get(DcMotorEx.class, "motorFR");
-        slider = hardwareMap.get(DcMotorEx.class, "slider");
-        claw = hardwareMap.servo.get("claw");
 
         motorBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorBR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         motorBL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motorBR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motorFL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motorFR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
 
         motorBL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorBR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorFL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorFR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
@@ -131,9 +125,9 @@ public class vasileA2 extends LinearOpMode {
         @Override
         public void run() {
             if(varrez=="Dreapta"&&!isStopRequested()) {
-                Translatare(130,0,0.5);
+                Translatare(-140,0,0.5);
                 kdf(200);
-                Translatare(0,245,0.5);
+                Translatare(0,-255,0.5);
                 kdf(200);
                 /*Rotire(215,0.5);
                 kdf(200);
@@ -158,21 +152,20 @@ public class vasileA2 extends LinearOpMode {
                 slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 kdf(200);*/
             }
-
             if(varrez == "Mijloc"&&!isStopRequested()) {
-                Translatare(130,0,0.5);
+                Translatare(-140,0,0.5);
                 kdf(200);
-                Translatare(0,245,0.5);
+                Translatare(0,-255,0.5);
                 kdf(600);
-                Translatare(-130,0,0.5);
+                Translatare(-150,0,0.5);
             }
 
             if(varrez == "Stanga"&&!isStopRequested()) {
-                Translatare(130,0,0.5);
+                Translatare(-140,0,0.5);
                 kdf(200);
-                Translatare(0,245,0.5);
+                Translatare(0,-255,0.5);
                 kdf(600);
-                Translatare(-260,0,0.5);
+                Translatare(-280,0,0.5);
             }
         }
     });
