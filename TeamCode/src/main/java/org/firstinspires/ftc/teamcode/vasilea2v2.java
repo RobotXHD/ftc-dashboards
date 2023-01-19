@@ -122,10 +122,10 @@ public class vasilea2v2 extends LinearOpMode {
                 telemetry.addData("Rectangle H/W:", height / width);
                 if (height / width < 0.9) {
                     telemetry.addData("Rect", "3");
-                    varrez = "Stanga";
+                    varrez = "Dreapta";
                 } else if (height / width < 3) {
                     telemetry.addData("Rect", "1");
-                    varrez = "Dreapta";
+                    varrez = "Stanga";
                 } else {
                     telemetry.addData("Rect", "2");
                     varrez = "Mijloc";
@@ -136,7 +136,9 @@ public class vasilea2v2 extends LinearOpMode {
                 telemetry.addData("Webcam error", "Please restart");
             }
         }
-        Autonom.start();
+        if(!isStopRequested()) {
+            Autonom.start();
+        }
         while(!isStopRequested()){
 
         }
@@ -144,45 +146,31 @@ public class vasilea2v2 extends LinearOpMode {
     public Thread Autonom = new Thread(new Runnable(){
         @Override
         public void run() {
-            if(varrez=="Stanga"&&!isStopRequested()) {
-                Translatare(140,0,0.5);
-                kdf(200);
-                Translatare(0,-245,0.5);
-                /*Rotire(215,0.5);
-                kdf(200);
-                slider.setTargetPosition(-870);
-                slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                slider.setPower(0.5);
-                while (slider.isBusy()) ;
-                slider.setPower(0);
-                slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                kdf(200);
-                claw.setPosition(0.4);
-                kdf(200);
-                Translatare(0,125,0.5);
-                kdf(200);
-                claw.setPosition(0.0);
-                kdf(200);
-                slider.setTargetPosition(-870);
-                slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);    .0
-                slider.setPower(0.5);
-                while (slider.isBusy()) ;
-                slider.setPower(0);
-                slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                kdf(200);*/
+            Translatare(140,0,0.3);
+            kdf(200);
+            Translatare(0,-70,0.3);
+            heater.setPosition(0.85);
+            kdf(300);
+            Rotire(65,0.3);
+            kdf(200);
+            target(-290,1,ecstensor);
+            kdf(500);
+            target(-300,1,alecsticulator);
+            kdf(250);
+            Translatare(0,-130,0.3);
+            kdf(200);
+            supramax.setPosition(1);
+            kdf(150);
+            Rotire(-65,0.3);
+            kdf(200);
+            Translatare(-30,0,0.3);
+            kdf(200);
+            Translatare(0,-130,0.3);
+            if(varrez=="Dreapta"&&!isStopRequested()) {
+                Translatare(-260,0,0.3);
             }
             if(varrez == "Mijloc"&&!isStopRequested()) {
-                Translatare(140,0,0.5);
-                kdf(200);
-                Translatare(0,-245,0.5);
-                kdf(600);
-                Translatare(-150,0,0.5);
-            }
-
-            if(varrez == "Dreapta"&&!isStopRequested()) {
-                Translatare(-140,0,0.5);
-                kdf(200);
-                Translatare(0,-245,0.5);
+                Translatare(-130,0,0.3);
             }
         }
     });
@@ -249,7 +237,7 @@ public class vasilea2v2 extends LinearOpMode {
     public void Translatare(int deltaX, int deltaY, double speed)
     {
         boolean Done = false;
-        int errorpos ;
+        int errorpos;
         int Maxerror = 20;
         int targetBL, targetBR, targetFL, targetFR;
         double cpcm = COUNTS_PER_CM * 0.707 ;
@@ -362,6 +350,14 @@ public class vasilea2v2 extends LinearOpMode {
             errorpos = Math.abs(targetFR - motorFR.getCurrentPosition());
             if (errorpos > Maxerror) Done = false;
         }
+    }
+    public void target(int poz, double pow, DcMotorEx motor){
+        motor.setTargetPosition(poz);
+        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motor.setPower(pow);
+        while (motor.isBusy());
+        motor.setPower(0);
+        motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
     public void kdf(int t){
         lastTime=System.currentTimeMillis();

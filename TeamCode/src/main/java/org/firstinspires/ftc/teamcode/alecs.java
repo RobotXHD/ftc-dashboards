@@ -33,7 +33,7 @@ public class alecs extends OpMode {
     double pmotorFL;
     double pmotorFR;
     double colagen=0;
-    private boolean alast = false;
+    private boolean alast = false,lblast = false,rblast = false;
     boolean v = true,ok1,ok2=false,ok3,ok4,ok5,ok6,ok7;
     private boolean stop=false,setSetpoint=false,setsetSetpoint=false;
     int okGrip = 1, okClaw = 1;
@@ -41,7 +41,7 @@ public class alecs extends OpMode {
     public int cn=0;
     private double correction=0;
     public ElapsedTime timer = new ElapsedTime();
-    double timeLimit = 0.25;
+    double timeLimit = 0.25, lbcn=0,rbcn=0,acn=0;
     int loaderState = -1;
     private int apoz = 0;
     Pid_Controller_Adevarat pid = new Pid_Controller_Adevarat(0.0,0.0,0.0);
@@ -97,8 +97,6 @@ public class alecs extends OpMode {
         alecsticulator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         ecstensor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        heater.setPosition(1);
-
         telemetry.addData("Status", "Initialized");
         telemetry.addData("Resseting", "Encoders");
         telemetry.update();
@@ -107,6 +105,7 @@ public class alecs extends OpMode {
         Chassis.start();
         Systems.start();
     }
+    public void stop(){stop = true;}
     private final Thread Chassis = new Thread(new Runnable() {
         @Override
         public void run(){
@@ -119,7 +118,7 @@ public class alecs extends OpMode {
                 y  = -gamepad1.left_stick_y;
                 x  = gamepad1.left_stick_x * 1.5;
                 rx = gamepad1.right_stick_x;
-                rx2 = gamepad2.right_stick_x/2;
+                rx2 = gamepad2.right_stick_x/3;
                 /*
                 pid.setPID(constants.pGyro,constants.iGyro,constants.dGyro);
                 if(clockwise != 0.0){
@@ -162,23 +161,41 @@ public class alecs extends OpMode {
                 }
 
                 //SLOW-MOTION
-                if (gamepad1.left_bumper) {
+
+                if (gamepad1.left_bumper != lblast) {
+                    lbcn++;
+                }
+                if(lbcn>=4){
+                    lbcn = 0;
+                }
+                if(lbcn==2) {
                     sm = 3;
                 }
-                else if (gamepad1.right_bumper) {
+                else if(lbcn==0){
+                    sm=1;
+                }
+                if (gamepad1.right_bumper != rblast) {
+                    rbcn++;
+                }
+                if(rbcn>=4){
+                    rbcn = 0;
+                }
+                if(rbcn==2) {
                     sm = 5;
                 }
-                else {
-                    sm = 0.5;
+                else if(rbcn==0){
+                    sm=1;
                 }
+                lblast = gamepad1.left_bumper;
+                rblast = gamepad1.right_bumper;
                 if(sm==3){
-                    POWER(pmotorFR / sm, pmotorFL / sm, pmotorBR / sm, pmotorBL / sm);
+                    POWER(pmotorFR, pmotorFL, pmotorBR, pmotorBL);
                 }
                 else if(sm==5){
-                    POWER(pmotorFR / sm, pmotorFL / sm, pmotorBR / sm, pmotorBL / sm);
+                    POWER(pmotorFR / 2, pmotorFL / 2, pmotorBR / 2, pmotorBL / 2);
                 }
                 else{
-                    POWER(pmotorFR / sm, pmotorFL / sm, pmotorBR / sm, pmotorBL / sm);
+                    POWER(pmotorFR * 2, pmotorFL * 2, pmotorBR * 2, pmotorBL * 2);
                 }
             }
         }
@@ -187,18 +204,39 @@ public class alecs extends OpMode {
         @Override
         public void run() {
             while (!stop) {
-
-                ecstensor.setPower(gamepad2.left_stick_y / 2);
-                alecsticulator.setPower(gamepad2.right_stick_y / 2);
-                heater.setPosition(gamepad2.right_trigger);
-
+                //if(ecstensor.getCurrentPosition() < 300) {
+                    ecstensor.setPower(gamepad2.left_stick_y / 2);
+                /*}
+                else{
+                    if(gamepad2.left_stick_y > 0) {
+                        ecstensor.setPower(0);
+                    }
+                    else{
+                        ecstensor.setPower(gamepad2.left_stick_y / 2);
+                    }
+                }*/
+                if (gamepad2.a != alast) {
+                    acn++;
+                }
+                if(acn>=4){
+                    acn = 0;
+                }
+                if(acn==2) {
+                    ms = 2;
+                }
+                else if(acn==0){
+                    ms = 1;
+                }
+                alast = gamepad2.a;
+                alecsticulator.setPower(gamepad2.right_stick_y / 2 / ms);
+                supramax.setPosition(gamepad2.right_trigger);
                 if(gamepad2.left_bumper && colagen <= 0.99) {
                     colagen+=0.003;
                 }
                 if(gamepad2.right_bumper && colagen >= 0.01){
                     colagen-=0.003;
                 }
-                supramax.setPosition(colagen);
+                heater.setPosition(1-colagen);
             }
         }
     });
@@ -212,6 +250,9 @@ public class alecs extends OpMode {
         telemetry.addData("alecsticulator:", alecsticulator.getCurrentPosition());
         telemetry.addData("supramax:", supramax.getPosition());
         telemetry.addData("heater:", heater.getPosition());
+        telemetry.addData("pozitie gheara", gamepad2.right_trigger);
+        telemetry.addData("sm:",sm);
+        telemetry.addData("ms:",ms);
         telemetry.update();
     }
     public void POWER(double df1, double sf1, double ds1, double ss1){
