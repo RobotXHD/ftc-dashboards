@@ -114,7 +114,6 @@ public class alecs extends OpMode {
                     ok1 = false;
                     ok1 = true;
                 }
-
                 y  = -gamepad1.left_stick_y;
                 x  = gamepad1.left_stick_x * 1.5;
                 rx = gamepad1.right_stick_x;
@@ -159,9 +158,7 @@ public class alecs extends OpMode {
                     pmotorBL /= max;
                     pmotorBR /= max;
                 }
-
                 //SLOW-MOTION
-
                 if (gamepad1.left_bumper != lblast) {
                     lbcn++;
                 }
@@ -189,10 +186,10 @@ public class alecs extends OpMode {
                 lblast = gamepad1.left_bumper;
                 rblast = gamepad1.right_bumper;
                 if(sm==3){
-                    POWER(pmotorFR, pmotorFL, pmotorBR, pmotorBL);
+                    POWER(pmotorFR/1.5, pmotorFL/1.5, pmotorBR/1.5, pmotorBL/1.5);
                 }
                 else if(sm==5){
-                    POWER(pmotorFR / 2, pmotorFL / 2, pmotorBR / 2, pmotorBL / 2);
+                    POWER(pmotorFR / 3, pmotorFL / 3, pmotorBR / 3, pmotorBL / 3);
                 }
                 else{
                     POWER(pmotorFR * 2, pmotorFL * 2, pmotorBR * 2, pmotorBL * 2);

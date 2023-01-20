@@ -86,6 +86,8 @@ public class vasilea2v2 extends LinearOpMode {
         alecsticulator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         ecstensor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        target(-200,1,ecstensor);
+
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
@@ -97,7 +99,6 @@ public class vasilea2v2 extends LinearOpMode {
             public void onOpened() {
                 webcam.startStreaming(Webcam_w, Webcam_h, OpenCvCameraRotation.UPRIGHT);
             }
-
             @Override
             public void onError(int errorCode) {
 
@@ -120,19 +121,23 @@ public class vasilea2v2 extends LinearOpMode {
                 telemetry.addData("Rectangle Width:", width);
                 telemetry.addData("Rectangle Height:", height);
                 telemetry.addData("Rectangle H/W:", height / width);
+                telemetry.addData("heater:", heater.getPosition());
                 if (height / width < 0.9) {
                     telemetry.addData("Rect", "3");
                     varrez = "Dreapta";
-                } else if (height / width < 3) {
+                }
+                else if (height / width < 3) {
                     telemetry.addData("Rect", "1");
                     varrez = "Stanga";
-                } else {
+                }
+                else {
                     telemetry.addData("Rect", "2");
                     varrez = "Mijloc";
                 }
                 telemetry.addData("caz", varrez);
                 telemetry.update();
-            } catch (Exception E) {
+            }
+            catch (Exception E) {
                 telemetry.addData("Webcam error", "Please restart");
             }
         }
@@ -149,29 +154,31 @@ public class vasilea2v2 extends LinearOpMode {
             Translatare(140,0,0.3);
             kdf(200);
             Translatare(0,-70,0.3);
-            heater.setPosition(0.85);
+            heater.setPosition(1);
             kdf(300);
             Rotire(65,0.3);
             kdf(200);
-            target(-290,1,ecstensor);
+            target(-520,1,ecstensor);
             kdf(500);
-            target(-300,1,alecsticulator);
+            target(-330,1,alecsticulator);
             kdf(250);
-            Translatare(0,-130,0.3);
+            Translatare(0,-50,0.3);
+            kdf(200);
+            heater.setPosition(0.5);
             kdf(200);
             supramax.setPosition(1);
-            kdf(150);
+            kdf(500);
             Rotire(-65,0.3);
-            kdf(200);
-            Translatare(-30,0,0.3);
-            kdf(200);
-            Translatare(0,-130,0.3);
-            if(varrez=="Dreapta"&&!isStopRequested()) {
+            kdf(500);
+            target(210,1,alecsticulator);
+            kdf(1500);
+            target(510,1,alecsticulator);
+            /*if(varrez=="Dreapta"&&!isStopRequested()) {
                 Translatare(-260,0,0.3);
             }
             if(varrez == "Mijloc"&&!isStopRequested()) {
                 Translatare(-130,0,0.3);
-            }
+            }*/
         }
     });
     public void testing(ContourPiepline pipeline){

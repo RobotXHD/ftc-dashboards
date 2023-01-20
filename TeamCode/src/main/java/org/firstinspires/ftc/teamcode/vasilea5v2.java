@@ -5,10 +5,12 @@ import static org.firstinspires.ftc.teamcode.Var.*;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -18,13 +20,17 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvWebcam;
 
 @Autonomous
-public class vasileA2 extends LinearOpMode {
+public class vasilea5v2 extends LinearOpMode {
     //de fapt AutonomousA2
     private OpenCvWebcam webcam;
     private PachetelNouOpenCV pipeline = new PachetelNouOpenCV();
     private double width, height;
     public double lastTime;
-    DcMotorEx motorFR, motorFL, motorBR, motorBL;
+    private DcMotorEx motorFR, motorFL, motorBR, motorBL;
+    private DcMotorEx ecstensor;
+    private DcMotorEx alecsticulator;
+    private Servo heater;
+    private Servo supramax;
     private Servo claw;
 
     String varrez = "Dreapta";
@@ -47,25 +53,41 @@ public class vasileA2 extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        motorBL = hardwareMap.get(DcMotorEx.class, "motorBL");
-        motorBR = hardwareMap.get(DcMotorEx.class, "motorBR");
-        motorFL = hardwareMap.get(DcMotorEx.class, "motorFL");
-        motorFR = hardwareMap.get(DcMotorEx.class, "motorFR");
-
-        motorBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorBR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        motorFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        motorBL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        motorBR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        motorFL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        motorFR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        motorBL = hardwareMap.get(DcMotorEx.class, "motorBL"); // Motor Back-Left
+        motorBR = hardwareMap.get(DcMotorEx.class, "motorBR"); // Motor Back-Right
+        motorFL = hardwareMap.get(DcMotorEx.class, "motorFL"); // Motor Front-Left
+        motorFR = hardwareMap.get(DcMotorEx.class, "motorFR"); // Motor Front-Right
+        ecstensor      = hardwareMap.get(DcMotorEx.class, "extinsator");
+        alecsticulator = hardwareMap.get(DcMotorEx.class,"articulator");
+        heater      = hardwareMap.servo.get("hitter");
+        supramax = hardwareMap.servo.get("articulatie");
 
         motorBL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorBR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorFL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorFR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        alecsticulator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        ecstensor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        motorFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorBR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        alecsticulator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        ecstensor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        motorFR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        motorFL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        motorBR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        motorBL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        alecsticulator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        ecstensor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        target(-200,1,ecstensor);
+
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
@@ -77,7 +99,6 @@ public class vasileA2 extends LinearOpMode {
             public void onOpened() {
                 webcam.startStreaming(Webcam_w, Webcam_h, OpenCvCameraRotation.UPRIGHT);
             }
-
             @Override
             public void onError(int errorCode) {
 
@@ -100,23 +121,29 @@ public class vasileA2 extends LinearOpMode {
                 telemetry.addData("Rectangle Width:", width);
                 telemetry.addData("Rectangle Height:", height);
                 telemetry.addData("Rectangle H/W:", height / width);
+                telemetry.addData("heater:", heater.getPosition());
                 if (height / width < 0.9) {
                     telemetry.addData("Rect", "3");
                     varrez = "Dreapta";
-                } else if (height / width < 3) {
+                }
+                else if (height / width < 3) {
                     telemetry.addData("Rect", "1");
                     varrez = "Stanga";
-                } else {
+                }
+                else {
                     telemetry.addData("Rect", "2");
                     varrez = "Mijloc";
                 }
                 telemetry.addData("caz", varrez);
                 telemetry.update();
-            } catch (Exception E) {
+            }
+            catch (Exception E) {
                 telemetry.addData("Webcam error", "Please restart");
             }
         }
-        Autonom.start();
+        if(!isStopRequested()) {
+            Autonom.start();
+        }
         while(!isStopRequested()){
 
         }
@@ -124,49 +151,34 @@ public class vasileA2 extends LinearOpMode {
     public Thread Autonom = new Thread(new Runnable(){
         @Override
         public void run() {
-            if(varrez=="Dreapta"&&!isStopRequested()) {
-                Translatare(-140,0,0.5);
-                kdf(200);
-                Translatare(0,-255,0.5);
-                kdf(200);
-                /*Rotire(215,0.5);
-                kdf(200);
-                slider.setTargetPosition(-870);
-                slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                slider.setPower(0.5);
-                while (slider.isBusy()) ;
-                slider.setPower(0);
-                slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                kdf(200);
-                claw.setPosition(0.4);
-                kdf(200);
-                Translatare(0,125,0.5);
-                kdf(200);
-                claw.setPosition(0.0);
-                kdf(200);
-                slider.setTargetPosition(-870);
-                slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);    .0
-                slider.setPower(0.5);
-                while (slider.isBusy()) ;
-                slider.setPower(0);
-                slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                kdf(200);*/
+            Translatare(-140,0,0.3);
+            kdf(200);
+            Translatare(0,-70,0.3);
+            heater.setPosition(1);
+            kdf(300);
+            Rotire(-65,0.3);
+            kdf(200);
+            target(-520,1,ecstensor);
+            kdf(500);
+            target(-330,1,alecsticulator);
+            kdf(250);
+            Translatare(0,-50,0.3);
+            kdf(200);
+            heater.setPosition(0.5);
+            kdf(200);
+            supramax.setPosition(1);
+            kdf(500);
+            Rotire(65,0.3);
+            kdf(500);
+            target(210,1,alecsticulator);
+            kdf(1500);
+            target(510,1,alecsticulator);
+            /*if(varrez=="Dreapta"&&!isStopRequested()) {
+                Translatare(-260,0,0.3);
             }
             if(varrez == "Mijloc"&&!isStopRequested()) {
-                Translatare(-140,0,0.5);
-                kdf(200);
-                Translatare(0,-255,0.5);
-                kdf(600);
-                Translatare(-150,0,0.5);
-            }
-
-            if(varrez == "Stanga"&&!isStopRequested()) {
-                Translatare(-140,0,0.5);
-                kdf(200);
-                Translatare(0,-255,0.5);
-                kdf(600);
-                Translatare(-280,0,0.5);
-            }
+                Translatare(-130,0,0.3);
+            }*/
         }
     });
     public void testing(ContourPiepline pipeline){
@@ -232,7 +244,7 @@ public class vasileA2 extends LinearOpMode {
     public void Translatare(int deltaX, int deltaY, double speed)
     {
         boolean Done = false;
-        int errorpos ;
+        int errorpos;
         int Maxerror = 20;
         int targetBL, targetBR, targetFL, targetFR;
         double cpcm = COUNTS_PER_CM * 0.707 ;
@@ -345,6 +357,14 @@ public class vasileA2 extends LinearOpMode {
             errorpos = Math.abs(targetFR - motorFR.getCurrentPosition());
             if (errorpos > Maxerror) Done = false;
         }
+    }
+    public void target(int poz, double pow, DcMotorEx motor){
+        motor.setTargetPosition(poz);
+        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motor.setPower(pow);
+        while (motor.isBusy());
+        motor.setPower(0);
+        motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
     public void kdf(int t){
         lastTime=System.currentTimeMillis();
