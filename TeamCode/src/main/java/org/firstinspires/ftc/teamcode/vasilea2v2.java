@@ -171,8 +171,6 @@ public class vasilea2v2 extends LinearOpMode {
             Rotire(-65,0.3);
             kdf(500);
             target(210,1,alecsticulator);
-            kdf(1500);
-            target(510,1,alecsticulator);
             /*if(varrez=="Dreapta"&&!isStopRequested()) {
                 Translatare(-260,0,0.3);
             }

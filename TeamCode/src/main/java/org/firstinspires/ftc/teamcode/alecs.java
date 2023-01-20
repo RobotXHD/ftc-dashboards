@@ -227,6 +227,9 @@ public class alecs extends OpMode {
                 alast = gamepad2.a;
                 alecsticulator.setPower(gamepad2.right_stick_y / 2 / ms);
                 supramax.setPosition(gamepad2.right_trigger);
+                if(gamepad2.b){
+                    target(300,1,ecstensor);
+                }
                 if(gamepad2.left_bumper && colagen <= 0.99) {
                     colagen+=0.003;
                 }
@@ -257,5 +260,13 @@ public class alecs extends OpMode {
         motorBL.setPower(ss1);
         motorFL.setPower(sf1);
         motorBR.setPower(ds1);
+    }
+    public void target(int poz, double pow, DcMotorEx motor){
+        motor.setTargetPosition(poz);
+        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motor.setPower(pow);
+        while (motor.isBusy());
+        motor.setPower(0);
+        motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 }
