@@ -86,7 +86,7 @@ public class vasilea2v2 extends LinearOpMode {
         alecsticulator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         ecstensor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        target(-200,1,ecstensor);
+        targetime(-200,1,ecstensor,2000);
 
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
@@ -122,17 +122,15 @@ public class vasilea2v2 extends LinearOpMode {
                 telemetry.addData("Rectangle Height:", height);
                 telemetry.addData("Rectangle H/W:", height / width);
                 telemetry.addData("heater:", heater.getPosition());
-                if (height / width < 0.9) {
-                    telemetry.addData("Rect", "3");
-                    varrez = "Dreapta";
-                }
-                else if (height / width < 3) {
+                if (height / width > 1.2 && height / width < 2.4) {
                     telemetry.addData("Rect", "1");
                     varrez = "Stanga";
-                }
-                else {
+                } else if (height / width > 2.4) {
                     telemetry.addData("Rect", "2");
                     varrez = "Mijloc";
+                } else {
+                    telemetry.addData("Rect", "3");
+                    varrez = "Dreapta";
                 }
                 telemetry.addData("caz", varrez);
                 telemetry.update();
@@ -151,32 +149,33 @@ public class vasilea2v2 extends LinearOpMode {
     public Thread Autonom = new Thread(new Runnable(){
         @Override
         public void run() {
-            Translatare(140,0,0.3);
+            Translatare(130,0,0.3);
             kdf(200);
             Translatare(0,-70,0.3);
-            heater.setPosition(1);
             kdf(300);
-            Rotire(65,0.3);
+            heater.setPosition(0.95);
+            kdf(300);
+            Rotire(70,0.3);
             kdf(200);
-            target(-520,1,ecstensor);
+            target(-1130,1,ecstensor);
             kdf(500);
-            target(-330,1,alecsticulator);
+            target(-380,1,alecsticulator);
             kdf(250);
             Translatare(0,-50,0.3);
             kdf(200);
-            heater.setPosition(0.5);
-            kdf(200);
             supramax.setPosition(1);
+            kdf(1500);
+            Rotire(-70,0.3);
             kdf(500);
-            Rotire(-65,0.3);
-            kdf(500);
-            target(210,1,alecsticulator);
-            /*if(varrez=="Dreapta"&&!isStopRequested()) {
-                Translatare(-260,0,0.3);
+            target(-260,1,alecsticulator);
+            kdf(1500);
+            target(-380,1,alecsticulator);
+            if(varrez=="Dreapta"&&!isStopRequested()) {
+                Translatare(-280,0,0.3);
             }
             if(varrez == "Mijloc"&&!isStopRequested()) {
-                Translatare(-130,0,0.3);
-            }*/
+                Translatare(-140,0,0.3);
+            }
         }
     });
     public void testing(ContourPiepline pipeline){
@@ -363,6 +362,18 @@ public class vasilea2v2 extends LinearOpMode {
         while (motor.isBusy());
         motor.setPower(0);
         motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+    public void targetime(int poz, double pow, DcMotorEx motor,int t){
+        double lastTime2;
+        lastTime2 = System.currentTimeMillis();
+        while(lastTime2 + t > System.currentTimeMillis()) {
+            motor.setTargetPosition(poz);
+            motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            motor.setPower(pow);
+            while (motor.isBusy()) ;
+            motor.setPower(0);
+            motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
     }
     public void kdf(int t){
         lastTime=System.currentTimeMillis();

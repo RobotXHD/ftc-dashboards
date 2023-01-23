@@ -97,6 +97,8 @@ public class alecs extends OpMode {
         alecsticulator.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         ecstensor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        heater.setPosition(0);
+
         telemetry.addData("Status", "Initialized");
         telemetry.addData("Resseting", "Encoders");
         telemetry.update();
@@ -202,7 +204,7 @@ public class alecs extends OpMode {
         public void run() {
             while (!stop) {
                 //if(ecstensor.getCurrentPosition() < 300) {
-                    ecstensor.setPower(gamepad2.left_stick_y / 2);
+                    ecstensor.setPower(gamepad2.left_stick_y);
                 /*}
                 else{
                     if(gamepad2.left_stick_y > 0) {
@@ -225,7 +227,7 @@ public class alecs extends OpMode {
                     ms = 1;
                 }
                 alast = gamepad2.a;
-                alecsticulator.setPower(gamepad2.right_stick_y / 2 / ms);
+                alecsticulator.setPower(gamepad2.right_stick_y / 2);
                 supramax.setPosition(gamepad2.right_trigger);
                 if(gamepad2.b){
                     target(300,1,ecstensor);
