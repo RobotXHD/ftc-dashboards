@@ -178,7 +178,7 @@ public class vasilea2v2 extends LinearOpMode {
             }
         }
     });
-    public void testing(ContourPiepline pipeline){
+    /*public void testing(ContourPiepline pipeline){
         if(lowerRuntime + 0.05 < getRuntime()){
             crThreshLow += -gamepad1.left_stick_y;
             cbThreshLow += gamepad1.left_stick_x;
@@ -202,7 +202,7 @@ public class vasilea2v2 extends LinearOpMode {
         telemetry.addData("lowerCb ", cbThreshLow);
         telemetry.addData("UpperCr ", crThreshHigh);
         telemetry.addData("UpperCb ", cbThreshHigh);
-    }
+    }*/
     public double inValues(double value, double min, double max){
         if(value < min){ value = min; }
         if(value > max){ value = max; }
@@ -370,7 +370,7 @@ public class vasilea2v2 extends LinearOpMode {
             motor.setTargetPosition(poz);
             motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             motor.setPower(pow);
-            while (motor.isBusy()) ;
+            while (motor.isBusy());
             motor.setPower(0);
             motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
