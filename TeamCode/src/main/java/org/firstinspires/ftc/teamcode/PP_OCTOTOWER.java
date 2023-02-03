@@ -26,7 +26,7 @@ public class PP_OCTOTOWER extends OpMode {
     private DcMotorEx motorFR;
     private DcMotorEx ecstensor, turela;
     private DcMotorEx alecsticulator1,alecsticulator2;
-    private CRServo crow;
+    private Servo claw;
     private Servo supramax;
     double sm = 1, ms = 2;
     private BNO055IMU imu;
@@ -36,8 +36,8 @@ public class PP_OCTOTOWER extends OpMode {
     double pmotorBR;
     double pmotorFL;
     double pmotorFR;
-    double colagen=1, lastTime;
-    private boolean alast = false,lblast = false,rblast = false;
+    double colagen=0.3, lastTime;
+    private boolean alast = false,lblast = false,rblast = false, slay=false;
     boolean v = true,ok1,ok2=false,ok3,ok4,ok5,ok6,ok7;
     private boolean stop=false,setSetpoint=false,setsetSetpoint=false;
     int okGrip = 1, okClaw = 1;
@@ -54,7 +54,7 @@ public class PP_OCTOTOWER extends OpMode {
     private long pidTime = 0;
     public double difference,medie;
     public double medii[] = new double[10];
-    public boolean rotating = false;
+    public boolean rotating = false,inAutomatizare = false;
     public double realAngle, targetAngle;
     private double forward, right, clockwise;
     DigitalChannel touchL,touchR;
@@ -69,7 +69,7 @@ public class PP_OCTOTOWER extends OpMode {
         alecsticulator1 = hardwareMap.get(DcMotorEx.class,"motorArm1");
         alecsticulator2 = hardwareMap.get(DcMotorEx.class, "motorArm2");
         ecstensor = hardwareMap.get(DcMotorEx.class, "motorExtension");
-        crow      = hardwareMap.crservo.get("servoRelease");
+        claw      = hardwareMap.servo.get("servoRelease");
         supramax = hardwareMap.servo.get("servoRotate");
 
         touchL = hardwareMap.get(DigitalChannel.class, "touchL"); // limitator de rotație stânga
@@ -93,7 +93,7 @@ public class PP_OCTOTOWER extends OpMode {
         alecsticulator2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         ecstensor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        /*motorFR.setMode(DcMotor.RunMode.RESET_ENCODERS);
+        motorFR.setMode(DcMotor.RunMode.RESET_ENCODERS);
         motorFL.setMode(DcMotor.RunMode.RESET_ENCODERS);
         motorBR.setMode(DcMotor.RunMode.RESET_ENCODERS);
         motorBL.setMode(DcMotor.RunMode.RESET_ENCODERS);
@@ -101,7 +101,7 @@ public class PP_OCTOTOWER extends OpMode {
         turela.setMode(DcMotor.RunMode.RESET_ENCODERS);
         alecsticulator1.setMode(DcMotor.RunMode.RESET_ENCODERS);
         alecsticulator2.setMode(DcMotor.RunMode.RESET_ENCODERS);
-        ecstensor.setMode(DcMotor.RunMode.RESET_ENCODERS);*/
+        ecstensor.setMode(DcMotor.RunMode.RESET_ENCODERS);
         //motorFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         //motorBR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         //motorBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -208,6 +208,7 @@ public class PP_OCTOTOWER extends OpMode {
                 }
                 lblast = gamepad1.left_bumper;
                 rblast = gamepad1.right_bumper;
+
                 if(sm==3){
                     POWER(pmotorFR/1.5, pmotorFL/1.5, pmotorBR/1.5, pmotorBL/1.5);
                 }
@@ -225,7 +226,7 @@ public class PP_OCTOTOWER extends OpMode {
         public void run() {
             while (!stop) {
                 //if(ecstensor.getCurrentPosition() < 300) {
-                ecstensor.setPower(gamepad2.left_stick_y);
+                ecstensor.setPower(gamepad2.left_stick_y/1.5/ms);
                 /*}
                 else{
                     if(gamepad2.left_stick_y > 0) {
@@ -247,38 +248,79 @@ public class PP_OCTOTOWER extends OpMode {
                 else if(acn==0){
                     ms = 1;
                 }
+
                 alast = gamepad2.a;
-                alecsticulator1.setPower(gamepad2.right_stick_y / 2);
-                alecsticulator2.setPower(-gamepad2.right_stick_y / 2);
+                alecsticulator1.setPower(gamepad2.right_stick_y);
+                alecsticulator2.setPower(-gamepad2.right_stick_y);
                 if(touchL.getState() && touchR.getState()) {
-                    turela.setPower(gamepad2.left_trigger - gamepad2.right_trigger);
+                    turela.setPower(gamepad2.left_trigger/2 - gamepad2.right_trigger/2);
                 }
-                else if(!touchR.getState()) {
-                    turela.setPower(-0.5);
+                else if(!touchR.getState() && !inAutomatizare) {
+                    turela.setPower(0);
                 }
-                else if(!touchL.getState()){
-                    turela.setPower(0.5);
+                else if(!touchL.getState() && !inAutomatizare){
+                    turela.setPower(0);
                 }
-                if(gamepad2.b){
-                    crow.setPower(1);
+                if(gamepad2.left_bumper){
+                    colagen-=0.003;
                 }
-                if(gamepad2.a){
-                    crow.setPower(-1);
-                }
-                if(gamepad2.left_bumper && colagen <= 0.99) {
+                if(gamepad2.right_bumper){
                     colagen+=0.003;
                 }
-                if(gamepad2.right_bumper && colagen >= 0.01) {
-                    colagen -= 0.003;
+                supramax.setPosition(colagen);
+
+                if(gamepad2.a /*&& colagen >= 0.01*/) {
+                    //colagen -= 0.005;
+                    claw.setPosition(0.2);
                 }
-                supramax.setPosition(1-colagen);
+                if(gamepad2.b /*&& colagen <= 0.99*/) {
+                    //colagen+=0.005;
+                    claw.setPosition(0.7);
+                }
+
+                //supramax.setPosition(1-colagen);
+
+                if(gamepad2.dpad_up)
+                {
+                    inAutomatizare = true;
+                    target(-732, 0.7,alecsticulator1);
+                    target(1200,0.7,turela);
+                    target(-110,0.7,ecstensor);
+                    inAutomatizare = false;
+                }
+
+
+                if(gamepad2.dpad_down)
+                {
+                    inAutomatizare = true;
+                    target(0,0.7,ecstensor);
+                    while(touchL.getState()){
+                        turela.setPower(-0.7);
+                    }
+                    target(0, 0.7,alecsticulator1);
+                    turela.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    turela.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    inAutomatizare = false;
+                }
+
+                /*if(gamepad2.dpad_up){
+                    alecsticulator1.setTargetPosition(62);
+                    alecsticulator2.setTargetPosition(0);
+                    alecsticulator1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    alecsticulator2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                    alecsticulator1.setPower(0.4);
+                    alecsticulator2.setPower(-0.2);
+
+
+                }*/
+
                 boolean isOver=true;
-                if(gamepad2.y && isOver==true){
+               /* if(gamepad2.y && isOver==true){
                     isOver = false;
                     target(-10,1,ecstensor);
                     target(-1060,1,alecsticulator1);
                     target(-250,1,ecstensor);
-                }
+                }*/
                 isOver = true;
             }
         }
@@ -292,11 +334,15 @@ public class PP_OCTOTOWER extends OpMode {
         telemetry.addData("ecstensor:", ecstensor.getCurrentPosition());
         telemetry.addData("alecsticulator1:", alecsticulator1.getCurrentPosition());
         telemetry.addData("alecsticulator2:", alecsticulator2.getCurrentPosition());
+        telemetry.addData("alecsticulator1:", alecsticulator1.getPower());
+        telemetry.addData("alecsticulator1:", alecsticulator2.getPower());
         telemetry.addData("supramax:", supramax.getPosition());
-        telemetry.addData("crow:", crow.getPower());
+        telemetry.addData("claw:", claw.getPosition());
         telemetry.addData("pozitie turela", turela.getCurrentPosition());
         telemetry.addData("sm:",sm);
         telemetry.addData("ms:",ms);
+        telemetry.addData("STARE SENZOR stg",touchL.getState());
+        telemetry.addData("STARE SENZOR stg",touchR.getState());
         telemetry.update();
     }
     public void POWER(double df1, double sf1, double ds1, double ss1){
@@ -312,6 +358,28 @@ public class PP_OCTOTOWER extends OpMode {
         while (motor.isBusy());
         motor.setPower(0);
         motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+    public void targetstop(int poz, double pow, DcMotorEx motor){
+        motor.setTargetPosition(poz);
+        motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        motor.setPower(pow);
+        while (motor.isBusy());
+        motor.setPower(0);
+        motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+    }
+    public void mamplicitisit(int poz1, double pow1){
+        alecsticulator1.setTargetPosition(poz1);
+        alecsticulator2.setTargetPosition(-poz1);
+        alecsticulator1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        alecsticulator2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        alecsticulator1.setPower(pow1);
+        alecsticulator2.setPower(pow1);
+        while (alecsticulator1.isBusy()||alecsticulator2.isBusy());
+        alecsticulator1.setPower(0);
+        alecsticulator2.setPower(0);
+        alecsticulator1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        alecsticulator2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
     public void kdf(int t){
         lastTime=System.currentTimeMillis();

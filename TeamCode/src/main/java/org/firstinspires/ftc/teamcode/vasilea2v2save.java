@@ -364,7 +364,7 @@ public class vasilea2v2save extends LinearOpMode {
     }
     public void kdf(int t){
         lastTime=System.currentTimeMillis();
-        while(lastTime + t < System.currentTimeMillis()){
+        while(lastTime + t > System.currentTimeMillis()){
 
         }
     }

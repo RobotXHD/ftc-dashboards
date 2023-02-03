@@ -228,7 +228,7 @@ public class alecs extends OpMode {
                 }
                 alast = gamepad2.a;
                 alecsticulator.setPower(gamepad2.right_stick_y / 2);
-                supramax.setPosition(gamepad2.right_trigger);
+                supramax.setPosition(1-gamepad2.right_trigger);
                 if(gamepad2.b){
                     target(300,1,ecstensor);
                 }
